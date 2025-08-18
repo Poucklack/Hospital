@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frente de Caixa - Supermercado</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #e6edf2;
+      color: #333;
+    }
+
+    header {
+      background: #1a73e8;
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+    }
+
+    nav a {
+      color: #000;
+      margin-left: 1rem;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      background: #ffc107;
+    }
+
+    nav a:hover {
+      background: #e0a800;
+      transform: translateY(-1px);
+    }
+
+    .card {
+      background: #fff;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #1a73e8;
+    }
+
+    .row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .row input {
+      padding: 0.6rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      transition: border 0.3s;
+    }
+
+    .row input:focus {
+      outline: none;
+      border-color: #1a73e8;
+      box-shadow: 0 0 5px rgba(26, 115, 232, 0.3);
+    }
+
+    .row button {
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      border: none;
+      background: #1a73e8;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+    }
+
+    .row button:hover {
+      background: #155ab6;
+      transform: translateY(-1px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #ddd;
+      padding: 0.7rem;
+      text-align: center;
+    }
+
+    th {
+      background: #f2f4f6;
+      font-weight: 600;
+    }
+
+    td button {
+      background: #e53935;
+      color: #fff;
+      border: none;
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    td button:hover {
+      background: #b71c1c;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .finalizar,
+    .ver-estoque {
+      padding: 0.7rem 1.3rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.1s;
+    }
+
+    .finalizar {
+      background: #28a745;
+      color: #fff;
+    }
+
+    .finalizar:hover {
+      background: #218838;
+      transform: translateY(-1px);
+    }
+
+    .ver-estoque {
+      background: #ffc107;
+      color: #333;
+    }
+
+    .ver-estoque:hover {
+      background: #e0a800;
+      transform: translateY(-1px);
+    }
+
+    #sugestoes div {
+      padding: 0.5rem;
+      cursor: pointer;
+    }
+
+    #sugestoes div:hover {
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>🛒 Frente de Caixa - Supermercado</h1>
+    <nav>
+      <a href="{{ url_for('vendas') }}">Vendas</a>
+      <a href="{{ url_for('estoque') }}">Estoque</a>
+      <a href="{{ url_for('historico_vendas') }}">Histórico</a>
+      <a href="{{ url_for('logout') }}" onclick="sessionStorage.clear()">Sair</a>
+    </nav>
+  </header>
+
+  <section class="card">
+    <h2>Registrar Venda</h2>
+
+    <div class="row">
+      <input type="text" id="codigo" placeholder="Escaneie ou digite o código" autofocus>
+      <input type="number" id="quantidade" placeholder="Peso/Qtd (kg)" min="0.001" step="0.001" value="1" style="width:100px;">
+      <button onclick="adicionarItem()">Adicionar</button>
+    </div>
+
+    <div class="row" style="position:relative; flex-direction:column;">
+      <input type="text" id="buscar_produto" placeholder="Buscar produto por nome" oninput="mostrarSugestoes()">
+      <div id="sugestoes"></div>
+    </div>
+
+    <table id="tabela">
+      <tr>
+        <th>Produto</th>
+        <th>Peso/Qtd (kg)</th>
+        <th>Preço/kg</th>
+        <th>Subtotal</th>
+        <th>Ação</th>
+      </tr>
+    </table>
+
+    <div class="total-row">
+      <h2>Total: R$ <span id="total">0.00</span></h2>
+      <button class="finalizar" onclick="finalizarVenda()">Finalizar Venda (F1)</button>
+      <button class="finalizar" onclick="imprimirCupomProfissional()">Imprimir Cupom (F2)</button>
+    </div>
+  </section>
+
+  <script>
+    let estoque = {{ estoque | tojson }};
+    let carrinho = JSON.parse(sessionStorage.getItem("carrinho")) || [];
+    let total = 0;
+
+    function salvarCarrinho() { sessionStorage.setItem("carrinho", JSON.stringify(carrinho)); }
+    function atualizarTabela() {
+      const tabela = document.getElementById("tabela");
+      tabela.innerHTML = "<tr><th>Produto</th><th>Peso/Qtd (kg)</th><th>Preço/kg</th><th>Subtotal</th><th>Ação</th></tr>";
+      total = 0;
+      carrinho.forEach((i, index) => {
+        let sub = i.quantidade * i.preco;
+        total += sub;
+        let row = tabela.insertRow();
+        row.innerHTML = `<td>${i.nome}</td><td>${i.quantidade.toFixed(3)}</td><td>${i.preco.toFixed(2)}</td><td>${sub.toFixed(2)}</td><td><button onclick="removerItem(${index})">Remover</button></td>`;
+      });
+      document.getElementById("total").innerText = total.toFixed(2);
+    }
+
+    // Adicionar item ao carrinho
+    function adicionarItem() {
+      let codigo = document.getElementById("codigo").value.trim();
+      let quantidade = parseFloat(document.getElementById("quantidade").value) || 1;
+      let p = estoque.find(x => String(x.codigo) === codigo);
+      if (!p) { alert("Produto não encontrado"); return; }
+      if (quantidade > p.estoque) { alert("Quantidade indisponível"); return; }
+      let existente = carrinho.find(x => x.codigo === codigo);
+      if (existente) {
+        if (existente.quantidade + quantidade > p.estoque) { alert("Quantidade indisponível"); return; }
+        existente.quantidade += quantidade;
+      } else {
+        carrinho.push({ codigo: p.codigo, nome: p.nome, preco: p.preco, quantidade: quantidade });
+      }
+      salvarCarrinho();
+      atualizarTabela();
+      document.getElementById("codigo").value = "";
+      document.getElementById("quantidade").value = 1;
+      document.getElementById("codigo").focus();
+    }
+
+    function removerItem(index) { carrinho.splice(index, 1); salvarCarrinho(); atualizarTabela(); }
+
+    function finalizarVenda() {
+      if (carrinho.length === 0) { alert("Carrinho vazio"); return; }
+      fetch("/registrar_venda", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itens: carrinho, total: total })
+      })
+        .then(r => r.json())
+        .then(d => {
+          alert(d.mensagem);
+          carrinho.forEach(item => {
+            let p = estoque.find(x => x.codigo === item.codigo);
+            if (p) p.estoque -= item.quantidade;
+          });
+          carrinho = []; salvarCarrinho(); atualizarTabela();
+        })
+        .catch(() => alert("Erro ao registrar a venda!"));
+    }
+
+    // Sugestões por nome
+    function mostrarSugestoes() {
+      const query = document.getElementById("buscar_produto").value.toLowerCase();
+      const sugestoesDiv = document.getElementById("sugestoes");
+      sugestoesDiv.innerHTML = "";
+      if (!query) return;
+      const filtrados = estoque.filter(p => p.nome.toLowerCase().includes(query));
+      filtrados.forEach(p => {
+        const div = document.createElement("div");
+        div.textContent = `${p.nome} - Código: ${p.codigo}`;
+        div.onclick = () => {
+          document.getElementById("codigo").value = p.codigo;
+          document.getElementById("quantidade").focus();
+          sugestoesDiv.innerHTML = "";
+          document.getElementById("buscar_produto").value = "";
+        };
+        sugestoesDiv.appendChild(div);
+      });
+    }
+
+    // Cupom Fiscal
+    async function imprimirCupomProfissional() {
+      if (carrinho.length === 0) { alert("Carrinho vazio"); return; }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: [80, 200] });
+      let y = 10;
+      doc.setFontSize(10); doc.setFont("courier");
+      doc.text("Supermercado Exemplo", 0, y, { align: "left" }); y += 6;
+      doc.text("Rua Exemplo, 123 - Salvador", 0, y, { align: "left" }); y += 6;
+      doc.text(`Data: ${new Date().toLocaleString()}`, 0, y, { align: "left" }); y += 6;
+      doc.text("--------------------------------", 0, y); y += 6;
+      doc.text("Produto    Qtd   Preço  Sub", 0, y); y += 6;
+      doc.text("--------------------------------", 0, y); y += 6;
+      carrinho.forEach(item => {
+        let subtotal = item.quantidade * item.preco;
+        let nome = item.nome.length > 14 ? item.nome.slice(0, 14) : item.nome.padEnd(14, ' ');
+        let qtd = item.quantidade.toFixed(3).padStart(5, ' ');
+        let preco = item.preco.toFixed(2).padStart(6, ' ');
+        let sub = subtotal.toFixed(2).padStart(6, ' ');
+        doc.text(`${nome} ${qtd} ${preco} ${sub}`, 10, y); y += 6;
+      });
+      doc.text("--------------------------------", 0, y); y += 6;
+      let total = carrinho.reduce((acc, item) => acc + item.quantidade * item.preco, 0);
+      doc.text(`TOTAL: R$ ${total.toFixed(2)}`, 0, y, { align: "left" }); y += 10;
+      doc.text("Obrigado pela preferência!", 0, y, { align: "left" }); y += 6;
+      doc.text("Volte Sempre!", 0, y, { align: "left" });
+      doc.autoPrint();
+      window.open(doc.output('bloburl'), '_blank');
+    }
+
+    // --- Foco automático e atalhos de teclado ---
+    document.getElementById("codigo").focus();
+
+    // Enter no campo de código adiciona item
+    document.getElementById("codigo").addEventListener("keypress", function (e) {
+      if (e.key === "Enter") { adicionarItem(); }
+    });
+
+    // Atalhos: F1 = Finalizar venda, F2 = Imprimir cupom
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "F1") { e.preventDefault(); finalizarVenda(); }
+      if (e.key === "F2") { e.preventDefault(); imprimirCupomProfissional(); }
+    });
+
+    atualizarTabela();
+  </script>
+</body>
+
+</html>

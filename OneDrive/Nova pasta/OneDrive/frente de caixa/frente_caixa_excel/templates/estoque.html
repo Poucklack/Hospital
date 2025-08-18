@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estoque</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+    }
+
+    header {
+      background: #1a73e8;
+      color: #fff;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    nav a {
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 0.3rem 0.7rem;
+      border-radius: 6px;
+      background: #ffc107;
+      transition: all 0.2s ease;
+    }
+
+    nav a:hover {
+      background: #e0a800;
+    }
+
+    .card {
+      background: #fff;
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: center;
+    }
+
+    th {
+      background: #eee;
+    }
+
+    .user-info {
+      background: #ffc107;
+      color: #1a1a1a;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .actions-container {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+
+    .update-btn {
+      background: #ffc107;
+      color: #1a1a1a;
+      height: 2.2rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 6px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    .update-btn:hover {
+      background: #e0a800;
+    }
+
+    .delete-btn {
+      background: #e53935;
+      color: #fff;
+      height: 2.2rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 6px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    .delete-btn:hover {
+      background: #b71c1c;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    form label {
+      display: flex;
+      flex-direction: column;
+      font-weight: bold;
+    }
+
+    form input {
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    form button {
+      padding: 0.7rem;
+      background: #ffc107;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    form button:hover {
+      background: #e0a800;
+    }
+
+    .estoque-baixo {
+      background-color: #ffcccc !important;
+      color: #b30000;
+      font-weight: bold;
+    }
+
+    .hint {
+      font-size: .9rem;
+      opacity: .8;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="user-info">
+    {{ session.get('user') }} ({{ session.get('role') }})
+  </div>
+
+  <header>
+    <h1>📦 Estoque</h1>
+    <nav>
+      <a href="{{ url_for('vendas') }}">Vendas</a>
+      <a href="{{ url_for('estoque') }}">Estoque</a>
+      <a href="{{ url_for('historico_vendas') }}">Histórico</a>
+      <a href="{{ url_for('logout') }}">Sair</a>
+    </nav>
+  </header>
+
+  <section class="card">
+    {% if role == 'admin' %}
+    <h2>Novo Produto</h2>
+    <form method="POST" action="{{ url_for('adicionar_produto') }}">
+      <label>Código
+        <input type="text" name="codigo" id="codigoInput" required autofocus>
+      </label>
+      <label>Nome<input type="text" name="nome" required></label>
+      <label>Preço<input type="number" step="0.01" name="preco" required></label>
+      <label>Estoque<input type="number" name="estoque" required></label>
+      <button type="submit">Adicionar</button>
+    </form>
+
+    <script>
+      const codigoInput = document.getElementById("codigoInput");
+
+      // Foca apenas ao carregar a página (autofocus já ajuda)
+      window.addEventListener("pageshow", () => {
+        if (codigoInput) codigoInput.focus();
+      });
+
+      // NUNCA mais forçar foco em cliques — para não atrapalhar outros campos.
+      // Atalho opcional para facilitar o dia a dia:
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "F9") {
+          e.preventDefault();
+          codigoInput.focus();
+          // Se já tiver algo, seleciona para sobrescrever com um novo scan
+          codigoInput.select();
+        }
+      });
+
+      // Leitor de código de barras normalmente envia Enter no final
+      codigoInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          e.target.form.submit();
+        }
+      });
+    </script>
+
+    <h2>Upload de Estoque</h2>
+    <form method="POST" action="{{ url_for('upload_estoque') }}" enctype="multipart/form-data">
+      <input type="file" name="arquivo_excel" accept=".xlsx" required>
+      <button type="submit">Enviar Estoque</button>
+    </form>
+    {% endif %}
+
+    <h2>Lista de Produtos</h2>
+    <table>
+      <tr>
+        <th>Código</th>
+        <th>Nome</th>
+        <th>Preço</th>
+        <th>Estoque</th>
+        {% if role == 'admin' %}<th>Ações</th>{% endif %}
+      </tr>
+      {% for p in estoque %}
+      <tr {% if p.get("estoque", 0) <=1 %} class="estoque-baixo" {% endif %}>
+        <td>{{ p.get("codigo", "") }}</td>
+        <td>{{ p.get("nome", "") }}</td>
+        <td>R$ {{ '%.2f'|format(p.get("preco", 0)) }}</td>
+        <td>{{ p.get("estoque", 0) }}</td>
+        {% if role == 'admin' %}
+        <td>
+          <div class="actions-container">
+            <form method="POST" action="{{ url_for('editar_estoque') }}" style="margin:0;">
+              <input type="hidden" name="codigo" value="{{ p.get('codigo', '') }}">
+              <input type="number" step="0.01" name="novo_preco" value="{{ p.get('preco', 0) }}">
+              <input type="number" name="novo_estoque" value="{{ p.get('estoque', 0) }}">
+              <button type="submit" class="update-btn">Atualizar</button>
+            </form>
+
+            <form method="POST" action="{{ url_for('deletar_produto') }}" style="margin:0;" onsubmit="return confirm('Deseja realmente deletar este produto?');">
+              <input type="hidden" name="codigo" value="{{ p.get('codigo', '') }}">
+              <button type="submit" class="delete-btn">Deletar</button>
+            </form>
+          </div>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <script>
+    async function atualizarEstoque() {
+      try {
+        const response = await fetch("{{ url_for('estoque_json') }}");
+        const dados = await response.json();
+        const tabela = document.querySelector("table");
+
+        dados.forEach((p, i) => {
+          const row = tabela.rows[i + 1];
+          if (row && !row.querySelector("input")) {
+            row.cells[0].textContent = p.codigo || '';
+            row.cells[1].textContent = p.nome || '';
+            row.cells[2].textContent = parseFloat(p.preco || 0).toFixed(2);
+            row.cells[3].textContent = p.estoque || 0;
+            if (parseFloat(p.estoque) <= 1) {
+              row.classList.add("estoque-baixo");
+            } else {
+              row.classList.remove("estoque-baixo");
+            }
+          }
+        });
+      } catch (err) {
+        console.error("Erro ao atualizar estoque:", err);
+      }
+    }
+    setInterval(atualizarEstoque, 3000);
+    atualizarEstoque();
+  </script>
+</body>
+
+</html>

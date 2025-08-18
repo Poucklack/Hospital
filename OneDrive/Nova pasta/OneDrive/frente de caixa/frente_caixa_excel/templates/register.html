@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro - Frente de Caixa</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-container {
+      background: #fff;
+      padding: 2rem 3rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #333;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 0.5rem;
+      color: #555;
+      font-weight: bold;
+    }
+
+    input,
+    select {
+      padding: 0.6rem 0.8rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.8rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #1a73e8;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #155ab6;
+    }
+
+    .messages {
+      margin-top: 1rem;
+      color: red;
+      text-align: center;
+    }
+
+    .messages ul {
+      padding: 0;
+      list-style: none;
+      margin: 0;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .login-link a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-container">
+    <h2>Cadastro</h2>
+    <form method="POST" id="registerForm">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" placeholder="Digite seu usuário" required>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Digite sua senha" required>
+
+      <label for="role">Função</label>
+      <select id="role" name="role" required>
+        <option value="caixa">Caixa</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <div id="adminPassContainer" style="display:none;">
+        <label for="adminPass">Senha de autorização para Admin</label>
+        <input type="password" id="adminPass" placeholder="Digite a senha especial">
+      </div>
+
+      <button type="submit">Cadastrar</button>
+    </form>
+
+    <div class="login-link">
+      <p>Já tem uma conta? <a href="{{ url_for('login') }}">Faça login aqui</a></p>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="messages">
+      <ul>
+        {% for m in messages %}
+        <li>{{ m }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% endwith %}
+  </div>
+
+  <script>
+    const roleSelect = document.getElementById('role');
+    const adminPassContainer = document.getElementById('adminPassContainer');
+    const form = document.getElementById('registerForm');
+
+    roleSelect.addEventListener('change', () => {
+      adminPassContainer.style.display = roleSelect.value === 'admin' ? 'block' : 'none';
+    });
+
+    form.addEventListener('submit', (e) => {
+      if (roleSelect.value === 'admin') {
+        const adminPass = document.getElementById('adminPass').value;
+        if (adminPass !== '7410') {
+          e.preventDefault();
+          alert('Senha especial incorreta para criar administrador!');
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Configuração</title></head>
+<body>
+<h2>Configuração dos arquivos Excel</h2>
+<form method="POST">
+Caminho Estoque: <input type="text" name="stock_path" value="{{config['stock_path']}}" required><br>
+Caminho Vendas: <input type="text" name="sales_path" value="{{config['sales_path']}}" required><br>
+Caminho Usuários: <input type="text" name="users_path" value="{{config['users_path']}}" required><br>
+<button type="submit">Salvar</button>
+</form>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul>{% for m in messages %}<li>{{m}}</li>{% endfor %}</ul>
+  {% endif %}
+{% endwith %}
+<a href="{{ url_for('vendas') }}">Voltar</a>
+</body>
+</html>
